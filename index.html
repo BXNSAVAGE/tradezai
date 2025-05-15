@@ -1,190 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TradezAI</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TradezAI | Real-Time Crypto Pulse</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
-    body, html {
+    * { box-sizing: border-box; }
+    body {
       margin: 0;
       padding: 0;
-      height: 100%;
+      font-family: 'Share Tech Mono', monospace;
+      background-color: #0f0f0f;
+      color: #00ff9f;
       overflow: hidden;
-      background-color: #0a0a0a;
-      color: white;
-      font-family: Arial, sans-serif;
     }
-    canvas {
+    #particles {
       position: absolute;
-      top: 0;
-      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
     }
-    #container {
+    .center-text {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 80%;
-      height: 80%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 10;
-    }
-    #title {
       font-size: 3rem;
-      margin-bottom: 20px;
-      z-index: 10;
+      color: #00ffe7;
+      z-index: 3;
+      pointer-events: none;
     }
     .coin-label {
       position: absolute;
-      font-size: 1.2rem;
+      font-size: 0.9rem;
+      white-space: nowrap;
       cursor: pointer;
-      transition: transform 0.2s ease, font-size 0.2s ease;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      z-index: 2;
+    }
+    .low { color: #00ff9f; }
+    .moderate { color: orange; }
+    .high { color: red; }
+    .coin-label:hover {
+      transform: scale(1.3);
+      filter: brightness(150%);
     }
   </style>
 </head>
 <body>
-  <canvas id="particleCanvas"></canvas>
-  <div id="container">
-    <div id="title">TradezAI</div>
-  </div>
-
+  <canvas id="particles"></canvas>
+  <div class="center-text">TradezAI</div>
   <script>
-    const canvas = document.getElementById('particleCanvas');
-    const ctx = canvas.getContext('2d');
-    const container = document.getElementById('container');
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    canvas.width = w;
-    canvas.height = h;
+    const canvas = document.getElementById("particles");
+    const ctx = canvas.getContext("2d");
+    let particles = [], coins = [];
+    let w, h;
 
-    const particles = [];
-    const allCoins = [];
-    const coinNames = [
-      "USDC", "SOL", "BTC", "ETH", "ADA", "BNB", "XRP", "DOGE", "DOT", "LTC",
-      "UNI", "LINK", "MATIC", "AVAX", "ATOM", "ALGO", "FTM", "SOLANA", "RAY", "SRM"
-    ];
-    const riskLevels = ["low", "moderate", "high"];
-    const colors = {
-      low: "green",
-      moderate: "orange",
-      high: "red"
+    const coinGroups = {
+      low: ["WAMP", "PEPE", "Devi", "UNICORN", "SWH", "YUPPIE"],
+      moderate: ["VETH", "WATCHCOIN", "ITRUMP", "SolaDog", "BOH", "Z12"],
+      high: ["KYC", "JPM", "TRUMPBARAK", "Methaphone", "TVERSE", "Pornhub"]
     };
 
-    function Particle(x, y, radius, color, label) {
-      this.x = x;
-      this.y = y;
-      this.radius = radius;
-      this.color = color;
-      this.label = label;
-      this.angle = Math.random() * Math.PI * 2;
-      this.speed = Math.random() * 0.02 + 0.01;
-      this.distance = Math.random() * 100 + 150;
-      this.labelElement = null;
+    const solscan = (hash) => `https://solscan.io/token/${hash}`;
 
-      this.update = function() {
-        this.angle += this.speed;
-        this.x = w / 2 + Math.cos(this.angle) * this.distance;
-        this.y = h / 2 + Math.sin(this.angle) * this.distance;
-      };
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
 
-      this.draw = function() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-      };
-
-      this.createLabel = function() {
-        this.labelElement = document.createElement('div');
-        this.labelElement.classList.add('coin-label');
-        this.labelElement.textContent = this.label;
-        this.labelElement.style.left = `${this.x - this.radius / 2}px`;
-        this.labelElement.style.top = `${this.y - this.radius / 2}px`;
-        container.appendChild(this.labelElement);
-
-        this.labelElement.addEventListener('click', () => {
-          const randomTxId = Math.random().toString(36).substring(2, 12);
-          const url = `https://solscan.io/token/${randomTxId}`;
-          window.open(url, '_blank');
+    function createCoinParticles() {
+      let index = 0;
+      Object.entries(coinGroups).forEach(([risk, group]) => {
+        group.forEach(name => {
+          const angle = Math.random() * Math.PI * 2;
+          const radius = 120 + Math.random() * 200;
+          const hash = Math.random().toString(36).substring(2, 12);
+          const div = document.createElement("div");
+          div.className = `coin-label ${risk}`;
+          div.textContent = name;
+          div.onclick = () => window.open(solscan(hash), '_blank');
+          document.body.appendChild(div);
+          coins.push({
+            el: div,
+            angle,
+            radius,
+            speed: 0.002 + Math.random() * 0.004
+          });
         });
-      };
-
-      this.updateLabelPosition = function() {
-        if (this.labelElement) {
-          this.labelElement.style.left = `${this.x - this.radius / 2}px`;
-          this.labelElement.style.top = `${this.y - this.radius / 2}px`;
-        }
-      };
+      });
     }
 
-    function createParticlesAndLabels() {
-      const numParticles = 600;
-      const radiusRange = [100, 300];
-      const labelOffsets = [10, 20, 30];
-
-      for (let i = 0; i < numParticles; i++) {
+    function createParticles() {
+      for (let i = 0; i < 300; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const radius = Math.random() * (radiusRange[1] - radiusRange[0]) + radiusRange[0];
-        const x = w / 2 + Math.cos(angle) * radius;
-        const y = h / 2 + Math.sin(angle) * radius;
-        const risk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
-        const color = colors[risk];
-        const label = coinNames[Math.floor(Math.random() * coinNames.length)];
-
-        const p = new Particle(x, y, 5, color, label);
-        p.createLabel();
-        p.updateLabelPosition();
-
-        particles.push(p);
-        allCoins.push(p);
+        const radius = 120 + Math.random() * 200;
+        particles.push({
+          x: 0, y: 0,
+          r: 1 + Math.random() * 2,
+          angle,
+          speed: 0.002 + Math.random() * 0.004,
+          radius
+        });
       }
     }
-
-    createParticlesAndLabels();
-
-    let hoveredParticle = null;
-    let mouseX = 0;
-    let mouseY = 0;
-
-    window.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-
-      let closestDist = Infinity;
-      hoveredParticle = null;
-
-      for (const p of particles) {
-        const dist = Math.hypot(p.x - mouseX, p.y - mouseY);
-        if (dist < closestDist) {
-          closestDist = dist;
-          hoveredParticle = p;
-        }
-      }
-    });
 
     function animate() {
       ctx.clearRect(0, 0, w, h);
-
-      for (const p of particles) {
-        p.update();
-        p.draw();
-        p.updateLabelPosition();
-
-        if (hoveredParticle === p) {
-          p.labelElement.style.transform = 'scale(1.2)';
-          p.labelElement.style.zIndex = '100';
-        } else {
-          p.labelElement.style.transform = 'scale(1)';
-          p.labelElement.style.zIndex = '1';
-        }
-      }
-
+      ctx.fillStyle = "rgba(0, 150, 255, 0.7)";
+      particles.forEach(p => {
+        p.angle += p.speed;
+        p.x = w / 2 + Math.cos(p.angle) * p.radius;
+        p.y = h / 2 + Math.sin(p.angle) * p.radius;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      coins.forEach(c => {
+        c.angle += c.speed;
+        const x = w / 2 + Math.cos(c.angle) * c.radius;
+        const y = h / 2 + Math.sin(c.angle) * c.radius;
+        c.el.style.left = `${x}px`;
+        c.el.style.top = `${y}px`;
+      });
       requestAnimationFrame(animate);
     }
 
+    createParticles();
+    createCoinParticles();
     animate();
   </script>
 </body>
